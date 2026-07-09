@@ -16,9 +16,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Charge le .env situé à la racine du projet
 load_dotenv(PROJECT_ROOT / ".env")
 
-# ─── LLM : Google Gemini ─────────────────────────────
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-AGENT_MODEL = os.getenv("AGENT_MODEL", "google_genai:gemini-3.5-flash")
+# ─── LLM : OpenAI ─────────────────────────────────────
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+AGENT_MODEL = os.getenv("AGENT_MODEL", "openai:gpt-4o-mini")
 
 # ─── LangSmith (tracing) ─────────────────────────────
 LANGSMITH_TRACING = os.getenv("LANGSMITH_TRACING", "false")
@@ -34,8 +34,8 @@ PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 def validate() -> None:
     """Vérifie que la configuration minimale est présente."""
-    if not GOOGLE_API_KEY:
+    if not OPENAI_API_KEY:
         raise RuntimeError(
-            "GOOGLE_API_KEY manquante : renseigne-la dans le fichier .env "
+            "OPENAI_API_KEY manquante : renseigne-la dans le fichier .env "
             "(voir .env.example)."
         )
