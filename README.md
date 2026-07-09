@@ -75,11 +75,25 @@ Configuration centrale du package agent :
 - définit et crée les dossiers de travail (`uploads/`, `src/web/static/plots/`) ;
 - `validate()` : vérifie la présence de la clé Gemini et lève une erreur claire sinon.
 
+### `src/agent/backend.py`
+
+Backend d'exécution local du deep agent (`LocalShellBackend`) :
+- `root_dir` pointe sur la racine du projet → l'agent accède directement aux vrais
+  fichiers (`uploads/`, `src/web/static/plots/`), sans étape d'upload ;
+- le `PATH` transmis au backend place l'interpréteur du `.venv` du projet en tête,
+  pour que les commandes `python …` lancées par l'agent utilisent le bon interpréteur
+  (avec pandas / matplotlib / seaborn installés) ;
+- `timeout=180` pour laisser le temps aux scripts d'analyse de s'exécuter.
+
+> Note : ces modules sont conçus comme un package (`from agent import config`), pas
+> comme des scripts autonomes. Pour un test manuel, lancer depuis la racine du projet
+> avec `PYTHONPATH=src`, ou avec `python -m agent.backend` depuis `src/`.
+
 ## Avancement
 
 - [x] Structure du projet + environnement `uv`
 - [x] Configuration de l'agent (`src/agent/config.py`)
-- [ ] Backend d'exécution (`src/agent/backend.py`)
+- [x] Backend d'exécution (`src/agent/backend.py`)
 - [ ] Outils custom (`src/agent/tools.py`)
 - [ ] Agent d'analyse (`src/agent/analysis_agent.py`)
 - [ ] Interface web Flask (`src/web/`)
