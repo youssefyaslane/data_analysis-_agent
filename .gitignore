@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Env / secrets
+.env
+
+# Données & artefacts générés
+uploads/
+services/web/src/web_app/static/plots/
+*.png
+!**/static/**/.gitkeep
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
