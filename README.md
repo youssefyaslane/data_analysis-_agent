@@ -89,12 +89,25 @@ Backend d'exécution local du deep agent (`LocalShellBackend`) :
 > comme des scripts autonomes. Pour un test manuel, lancer depuis la racine du projet
 > avec `PYTHONPATH=src`, ou avec `python -m agent.backend` depuis `src/`.
 
+### `src/agent/tools.py`
+
+Outil custom `save_plot(source_path)` exposé au deep agent :
+- l'agent génère un graphique (ex. `plt.savefig('output/plot.png')`) dans le vrai
+  système de fichiers via le backend local ;
+- l'outil vérifie que le fichier existe et est un `.png`, le copie dans
+  `src/web/static/plots/` sous un nom unique (UUID) pour éviter les collisions
+  entre analyses ;
+- retourne l'URL web (`/static/plots/<uuid>.png`) que la page de résultat utilisera
+  directement dans une balise `<img>` ;
+- erreurs (fichier absent, mauvaise extension) renvoyées comme message texte à
+  l'agent plutôt que comme exception, pour ne pas casser le run.
+
 ## Avancement
 
 - [x] Structure du projet + environnement `uv`
 - [x] Configuration de l'agent (`src/agent/config.py`)
 - [x] Backend d'exécution (`src/agent/backend.py`)
-- [ ] Outils custom (`src/agent/tools.py`)
+- [x] Outils custom (`src/agent/tools.py`)
 - [ ] Agent d'analyse (`src/agent/analysis_agent.py`)
 - [ ] Interface web Flask (`src/web/`)
 - [ ] Lancement local de bout en bout
