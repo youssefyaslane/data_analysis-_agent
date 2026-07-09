@@ -19,6 +19,12 @@ data_analysis_agent/
 │   │   ├── tools.py            # outil read_csv_summary
 │   │   └── analysis_agent.py   # agent LangGraph + run_analysis()
 │   └── web/                    # application web Flask
+│       ├── config.py           # config Flask (.env, upload)
+│       ├── agent_client.py     # pont vers l'agent + rendu Markdown
+│       ├── routes.py           # blueprint : / et /analyze
+│       ├── app.py              # create_app()
+│       ├── templates/          # base.html, index.html, result.html
+│       └── static/css/         # style.css
 ├── tests/
 │   └── manual_test_agent.py    # script de test manuel de l'agent
 ├── uploads/                    # CSV téléversés
@@ -43,7 +49,7 @@ uv venv --python 3.12
 .venv\Scripts\Activate.ps1
 
 # 3. Installer les dépendances
-uv pip install flask pandas python-dotenv langchain langchain-openai langgraph
+uv pip install flask pandas python-dotenv langchain langchain-openai langgraph markdown
 
 # 4. (Optionnel) Figer les versions
 uv pip freeze > requirements.txt
@@ -71,6 +77,8 @@ Variables lues par l'application (voir `.env.example`) :
 | `LANGSMITH_TRACING` | Active le tracing LangSmith (`true`/`false`) |
 | `LANGSMITH_API_KEY` | Clé API LangSmith |
 | `LANGSMITH_PROJECT` | Nom du projet LangSmith |
+| `FLASK_SECRET_KEY` | Clé secrète Flask (sessions, messages flash) |
+| `MAX_UPLOAD_MB` | Taille max d'upload en Mo (déf. 10) |
 
 ## Modules
 
@@ -104,6 +112,52 @@ sans framework `deepagents`) et expose `run_analysis(csv_relative_path)` :
 
 > Testé de bout en bout avec `tests/manual_test_agent.py` : l'agent lit le CSV,
 > calcule les agrégations pertinentes et rédige un rapport d'insights structuré.
+> Tracing LangSmith vérifié (projet `data-analysis-agent`).
+
+### `src/web/config.py`
+
+Configuration Flask : dossier d'upload (réutilise `agent.config.UPLOADS_DIR`),
+extensions autorisées (`.csv`), taille max d'upload, clé secrète.
+
+### `src/web/agent_client.py`
+
+Pont entre les routes et l'agent :
+- appelle `run_analysis()` et enveloppe toute erreur dans `AnalysisError` (message
+  propre affiché à l'utilisateur plutôt qu'une trace Python) ;
+- convertit le rapport Markdown de l'agent en HTML (`markdown`) pour un rendu
+  correctement mis en forme (titres, gras, listes) côté navigateur.
+
+### `src/web/routes.py`
+
+Blueprint `main` :
+- `GET /` — formulaire d'upload ;
+- `POST /analyze` — valide le fichier (présence, extension), le sauvegarde avec
+  un nom sécurisé, lance l'analyse et affiche le résultat (ou un message d'erreur
+  via `flash` en cas d'échec).
+
+### `src/web/app.py`
+
+Fabrique `create_app()` : configure Flask depuis `web.config`, enregistre le
+blueprint. Un bootstrap ajoute `src/` à `sys.path` pour pouvoir lancer
+`python src/web/app.py` directement, quel que soit le dossier courant.
+
+### Templates & CSS
+
+Design moderne (cartes avec ombre, accent indigo, thème clair/sombre automatique) :
+- `base.html` — en-tête, messages flash, structure commune ;
+- `index.html` — formulaire d'upload ;
+- `result.html` — rapport rendu en HTML sémantique (titres, listes, gras) +
+  graphique optionnel ;
+- `static/css/style.css` — sans dépendance externe (pas de CDN).
+
+## Lancer l'application
+
+```powershell
+.venv\Scripts\Activate.ps1
+python src\web\app.py
+```
+
+Ouvrir http://127.0.0.1:5000, téléverser un CSV, cliquer "Analyser".
 
 ## Avancement
 
@@ -111,6 +165,6 @@ sans framework `deepagents`) et expose `run_analysis(csv_relative_path)` :
 - [x] Configuration de l'agent (`src/agent/config.py`)
 - [x] Outil d'analyse CSV (`src/agent/tools.py`)
 - [x] Agent d'analyse (`src/agent/analysis_agent.py`) — testé de bout en bout
-- [ ] Interface web Flask (`src/web/`)
-- [ ] Lancement local de bout en bout
+- [x] Interface web Flask (`src/web/`) — testée de bout en bout dans le navigateur
+- [x] Lancement local de bout en bout
 - [ ] Conteneurisation Docker

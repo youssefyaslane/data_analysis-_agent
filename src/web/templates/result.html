@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Résultat — {{ filename }}{% endblock %}
+
+{% block content %}
+  <div class="result-header">
+    <span class="badge">{{ filename }}</span>
+    <h1>Rapport d'analyse</h1>
+  </div>
+
+  <div class="card report">
+    {{ report_html | safe }}
+  </div>
+
+  {% if plot_url %}
+    <img class="plot" src="{{ plot_url }}" alt="Graphique de l'analyse">
+  {% endif %}
+
+  <a class="btn btn--secondary" href="{{ url_for('main.index') }}">← Analyser un autre fichier</a>
+{% endblock %}

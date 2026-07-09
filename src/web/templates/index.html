@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Analyser un CSV — Data Analysis Agent{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <h1>Analysez vos données en quelques secondes</h1>
+    <p class="lead">
+      Téléversez un fichier CSV et obtenez des statistiques, des corrélations
+      et des insights générés par un agent IA.
+    </p>
+  </section>
+
+  <form method="post" action="{{ url_for('main.analyze') }}" enctype="multipart/form-data" class="card upload-card">
+    <label for="csv_file" class="field-label">Fichier CSV</label>
+    <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+    <button type="submit" class="btn btn--primary">Analyser</button>
+  </form>
+{% endblock %}
