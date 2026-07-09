@@ -54,3 +54,34 @@ Copier `.env.example` vers `.env` et renseigner la clé API Gemini :
 ```powershell
 Copy-Item .env.example .env
 ```
+
+Variables lues par l'application (voir `.env.example`) :
+
+| Variable | Rôle |
+|---|---|
+| `GOOGLE_API_KEY` | Clé API Google Gemini |
+| `AGENT_MODEL` | Modèle utilisé par l'agent (déf. `google_genai:gemini-3.5-flash`) |
+| `LANGSMITH_TRACING` | Active le tracing LangSmith (`true`/`false`) |
+| `LANGSMITH_API_KEY` | Clé API LangSmith |
+| `LANGSMITH_PROJECT` | Nom du projet LangSmith |
+
+## Modules
+
+### `src/agent/config.py`
+
+Configuration centrale du package agent :
+- charge le `.env` (via `python-dotenv`) ;
+- expose la config LLM (`GOOGLE_API_KEY`, `AGENT_MODEL`) et LangSmith ;
+- définit et crée les dossiers de travail (`uploads/`, `src/web/static/plots/`) ;
+- `validate()` : vérifie la présence de la clé Gemini et lève une erreur claire sinon.
+
+## Avancement
+
+- [x] Structure du projet + environnement `uv`
+- [x] Configuration de l'agent (`src/agent/config.py`)
+- [ ] Backend d'exécution (`src/agent/backend.py`)
+- [ ] Outils custom (`src/agent/tools.py`)
+- [ ] Agent d'analyse (`src/agent/analysis_agent.py`)
+- [ ] Interface web Flask (`src/web/`)
+- [ ] Lancement local de bout en bout
+- [ ] Conteneurisation Docker
