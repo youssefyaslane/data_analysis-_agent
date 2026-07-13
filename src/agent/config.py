@@ -27,9 +27,7 @@ LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "data-analysis-agent")
 
 # ─── Chemins de travail ──────────────────────────────
 UPLOADS_DIR = PROJECT_ROOT / "uploads"
-PLOTS_DIR = PROJECT_ROOT / "src" / "web" / "static" / "plots"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def validate() -> None:
