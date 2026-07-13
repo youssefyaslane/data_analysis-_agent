@@ -148,7 +148,8 @@ blueprint. Un bootstrap ajoute `src/` à `sys.path` pour pouvoir lancer
 
 ### Templates & CSS
 
-Design moderne (cartes avec ombre, accent indigo, thème clair/sombre automatique) :
+Design inspiré de Notion (fond blanc cassé chaud, texte quasi-noir, boutons sombres
+sobres, bordures fines et ombres discrètes, thème clair/sombre automatique) :
 - `base.html` — en-tête, messages flash, structure commune ;
 - `index.html` — formulaire d'upload ;
 - `result.html` — rapport rendu en HTML sémantique (titres, listes, gras) +
