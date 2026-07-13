@@ -74,4 +74,4 @@ def run_analysis(csv_relative_path: str) -> dict:
     if not report:
         raise RuntimeError("Le workflow n'a produit aucune analyse exploitable.")
 
-    return {"report": report, "plot_url": None}
+    return {"report": report}

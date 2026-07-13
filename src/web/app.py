@@ -1,6 +1,7 @@
 """Point d'entrée de l'application web Flask."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -26,4 +27,5 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True)
+    debug = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    create_app().run(debug=debug)

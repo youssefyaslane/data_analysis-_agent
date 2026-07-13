@@ -12,9 +12,5 @@
     {{ report_html | safe }}
   </div>
 
-  {% if plot_url %}
-    <img class="plot" src="{{ plot_url }}" alt="Graphique de l'analyse">
-  {% endif %}
-
   <a class="btn btn--secondary" href="{{ url_for('main.index') }}">← Analyser un autre fichier</a>
 {% endblock %}

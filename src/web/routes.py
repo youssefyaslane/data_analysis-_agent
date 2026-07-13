@@ -43,5 +43,4 @@ def analyze():
         "result.html",
         filename=filename,
         report_html=result["report_html"],
-        plot_url=result["plot_url"],
     )

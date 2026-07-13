@@ -11,7 +11,7 @@ venv/
 
 # Données & artefacts générés
 uploads/
-services/web/src/web_app/static/plots/
+src/web/static/plots/
 *.png
 !**/static/**/.gitkeep
 
