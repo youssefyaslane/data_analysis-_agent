@@ -1,8 +1,13 @@
 # Data Analysis Agent
 
 Application web (Flask) permettant de téléverser un fichier CSV, de l'analyser via un
-**agent LangChain** (lecture des données, statistiques, corrélations, top performeurs),
-puis d'afficher le rapport d'insights dans le navigateur.
+**workflow LangGraph** (lecture des données, statistiques, corrélations, top performeurs,
+génération d'insights), puis d'afficher le rapport dans le navigateur.
+
+Le workflow est volontairement un **graphe à étapes fixes** plutôt qu'un agent autonome :
+la lecture du CSV (pandas, aucun appel LLM) précède un unique appel au LLM pour rédiger
+les insights. Résultat : coût et nombre d'appels prévisibles, et une trace LangSmith nette
+(un nœud par étape) plutôt qu'une boucle d'agent imprévisible.
 
 > La génération de graphique est désactivée pour l'instant (analyse textuelle
 > uniquement), afin de limiter le nombre d'appels au LLM. Pourra être réactivée plus tard.
@@ -17,7 +22,7 @@ data_analysis_agent/
 │   ├── agent/                  # package d'analyse
 │   │   ├── config.py           # configuration (.env, chemins)
 │   │   ├── tools.py            # outil read_csv_summary
-│   │   └── analysis_agent.py   # agent LangGraph + run_analysis()
+│   │   └── analysis_agent.py   # workflow LangGraph (StateGraph) + run_analysis()
 │   └── web/                    # application web Flask
 │       ├── config.py           # config Flask (.env, upload)
 │       ├── agent_client.py     # pont vers l'agent + rendu Markdown
@@ -92,8 +97,8 @@ Configuration centrale du package agent :
 
 ### `src/agent/tools.py`
 
-Outil `read_csv_summary(path)` exposé à l'agent — lit le CSV avec pandas et
-retourne en un seul appel :
+`summarize_csv(path)` — fonction déterministe (aucun appel LLM), lit le CSV avec
+pandas et retourne un résumé structuré :
 - dimensions, types de colonnes, valeurs manquantes ;
 - corrélations entre colonnes numériques (hors colonnes identifiants, ex. `Order ID`) ;
 - top 5 par colonne catégorielle à faible cardinalité (ex. meilleure région par
@@ -104,15 +109,15 @@ retourne en un seul appel :
 
 ### `src/agent/analysis_agent.py`
 
-Construit l'agent avec `langgraph.prebuilt.create_react_agent` (agent LangChain léger,
-sans framework `deepagents`) et expose `run_analysis(csv_relative_path)` :
-- un seul outil (`read_csv_summary`) et un prompt système court ;
-- extrait le texte des messages IA de la conversation comme rapport d'insights ;
-- lève une erreur claire si l'agent ne produit aucune analyse exploitable.
+Workflow `langgraph.graph.StateGraph` à deux nœuds, et `run_analysis(csv_relative_path)` :
+- **`read_csv`** — appelle `summarize_csv` (étape déterministe, pas de LLM) ;
+- **`generate_insights`** — un seul appel au LLM à partir du résumé, pour rédiger
+  le rapport d'insights ;
+- lève une erreur claire si le workflow ne produit aucune analyse exploitable.
 
-> Testé de bout en bout avec `tests/manual_test_agent.py` : l'agent lit le CSV,
-> calcule les agrégations pertinentes et rédige un rapport d'insights structuré.
-> Tracing LangSmith vérifié (projet `data-analysis-agent`).
+> Testé de bout en bout avec `tests/manual_test_agent.py`. Tracing LangSmith vérifié
+> (projet `data-analysis-agent`) : le graphe apparaît avec ses 2 nœuds distincts et un
+> seul appel `ChatOpenAI`, confirmant le comportement déterministe du workflow.
 
 ### `src/web/config.py`
 

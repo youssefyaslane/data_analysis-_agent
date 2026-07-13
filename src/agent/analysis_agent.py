@@ -1,25 +1,37 @@
-"""Construction et exécution de l'agent d'analyse de données (LangChain)."""
+"""Workflow LangGraph d'analyse de données : lecture CSV -> insights.
+
+Deux étapes déterministes, tracées séparément dans LangSmith :
+1. read_csv : lecture pandas + résumé structuré (aucun appel LLM)
+2. generate_insights : un seul appel LLM à partir de ce résumé
+"""
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage
+from typing import TypedDict
+
 from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.prebuilt import create_react_agent
+from langgraph.graph import END, StateGraph
 
 from agent import config
-from agent.tools import read_csv_summary
+from agent.tools import summarize_csv
 
-SYSTEM_PROMPT = """Tu es un agent d'analyse de données.
+INSIGHTS_PROMPT = """Tu es un agent d'analyse de données.
 
-Pour le fichier CSV fourni :
-1. Appelle l'outil read_csv_summary pour obtenir un résumé des données.
-2. Rédige des INSIGHTS clairs et concrets à partir de ce résumé : tendances,
-   valeurs extrêmes, comparaisons, corrélations notables — pas seulement des
-   chiffres bruts.
-3. Termine par un résumé structuré de tes insights.
+Voici le résumé structuré d'un fichier CSV :
+
+{summary}
+
+À partir de ce résumé, rédige des INSIGHTS clairs et concrets : tendances,
+valeurs extrêmes, comparaisons, corrélations notables — pas seulement des
+chiffres bruts. Termine par un résumé structuré de tes insights.
 
 Ne génère PAS de graphique : uniquement une analyse textuelle.
 """
+
+
+class AnalysisState(TypedDict):
+    csv_path: str
+    csv_summary: str
+    report: str
 
 
 def _build_model() -> ChatOpenAI:
@@ -31,37 +43,35 @@ def _build_model() -> ChatOpenAI:
     )
 
 
-def build_agent():
-    return create_react_agent(
-        model=_build_model(),
-        tools=[read_csv_summary],
-        prompt=SYSTEM_PROMPT,
-        checkpointer=InMemorySaver(),
-    )
+def read_csv_node(state: AnalysisState) -> dict:
+    return {"csv_summary": summarize_csv(state["csv_path"])}
+
+
+def generate_insights_node(state: AnalysisState) -> dict:
+    model = _build_model()
+    response = model.invoke(INSIGHTS_PROMPT.format(summary=state["csv_summary"]))
+    return {"report": response.content}
+
+
+def build_workflow():
+    graph = StateGraph(AnalysisState)
+    graph.add_node("read_csv", read_csv_node)
+    graph.add_node("generate_insights", generate_insights_node)
+    graph.set_entry_point("read_csv")
+    graph.add_edge("read_csv", "generate_insights")
+    graph.add_edge("generate_insights", END)
+    return graph.compile()
 
 
 def run_analysis(csv_relative_path: str) -> dict:
-    """Lance l'agent sur un CSV et retourne le rapport d'insights."""
+    """Lance le workflow sur un CSV et retourne le rapport d'insights."""
     config.validate()
-    agent = build_agent()
+    workflow = build_workflow()
 
-    input_message = {
-        "role": "user",
-        "content": f"Analyse le fichier {csv_relative_path} et donne-moi tes insights.",
-    }
-    thread_config = {"configurable": {"thread_id": "analysis"}}
-    result = agent.invoke({"messages": [input_message]}, thread_config)
-
-    messages = result["messages"]
-
-    # Insights : texte de tous les messages IA (hors appels d'outils purs)
-    report_parts = [
-        m.content for m in messages
-        if isinstance(m, AIMessage) and isinstance(m.content, str) and m.content.strip()
-    ]
-    report = "\n\n".join(report_parts).strip()
+    result = workflow.invoke({"csv_path": csv_relative_path})
+    report = result.get("report", "").strip()
 
     if not report:
-        raise RuntimeError("L'agent n'a produit aucune analyse exploitable.")
+        raise RuntimeError("Le workflow n'a produit aucune analyse exploitable.")
 
     return {"report": report, "plot_url": None}

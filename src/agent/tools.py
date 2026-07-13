@@ -1,12 +1,11 @@
-"""Outils custom de l'agent d'analyse.
+"""Étape de lecture CSV du workflow d'analyse.
 
-Fournit un outil unique qui lit un CSV et retourne un résumé structuré,
-pour que l'agent obtienne tout le contexte nécessaire en un seul appel.
+Fonction déterministe (aucun appel LLM) qui lit un CSV et retourne un
+résumé structuré, utilisé comme première étape du workflow LangGraph.
 """
 from __future__ import annotations
 
 import pandas as pd
-from langchain.tools import tool
 
 from agent import config
 
@@ -15,13 +14,8 @@ from agent import config
 MAX_FULL_ROWS = 500
 
 
-@tool(parse_docstring=True)
-def read_csv_summary(path: str) -> str:
-    """Lit un fichier CSV et retourne un résumé structuré de son contenu.
-
-    Args:
-        path: Chemin du fichier CSV, relatif à la racine du projet.
-    """
+def summarize_csv(path: str) -> str:
+    """Lit un fichier CSV et retourne un résumé structuré de son contenu."""
     resolved = (config.PROJECT_ROOT / path).resolve()
 
     if not resolved.is_file():
@@ -29,7 +23,7 @@ def read_csv_summary(path: str) -> str:
 
     try:
         df = pd.read_csv(resolved)
-    except Exception as e:  # noqa: BLE001 - remonter l'erreur à l'agent plutôt que planter
+    except Exception as e:  # noqa: BLE001 - remonter l'erreur au workflow plutôt que planter
         return f"Erreur lors de la lecture du CSV : {e}"
 
     parts = [
